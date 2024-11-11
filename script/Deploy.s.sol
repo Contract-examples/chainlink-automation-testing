@@ -10,7 +10,7 @@ contract DeployScript is Script {
     bytes32 constant SALT = bytes32(uint256(0x0000000000000000000000000000000000000000d3bf2663da51c10215000003));
 
     // Contract Creation Code
-    // https://sepolia.arbiscan.io/address/0x0A30BeC1366bf502f9704c49E0889473Bf77dD8e
+    // https://sepolia.arbiscan.io/address/0x0678cf77d3FC98622842Ee284EFADa3851CE2bee
 
     function run() public {
         // TODO: encrypt your private key
