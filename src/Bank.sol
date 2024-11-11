@@ -10,16 +10,21 @@ import { AutomationCompatibleInterface } from "./AutomationCompatibleInterface.s
 contract Bank is Ownable, ReentrancyGuardTransient, Pausable, AutomationCompatibleInterface {
     address public admin;
     mapping(address => uint256) public balances;
-    uint256 public threshold;
+    uint256 public immutable threshold;
+
+    // add interval control
+    uint256 public immutable interval;
+    uint256 public lastTimeStamp;
 
     // Custom errors
     error DepositTooLow();
     error OnlyAdminCanWithdraw();
-    error WithdrawalFailed();
 
-    constructor() Ownable(msg.sender) {
-        admin = msg.sender;
+    constructor(address _admin, uint256 updateInterval) Ownable(_admin) {
+        admin = _admin;
         threshold = 0.011 ether;
+        interval = updateInterval;
+        lastTimeStamp = block.timestamp;
     }
 
     // Receive ETH
@@ -86,20 +91,29 @@ contract Bank is Ownable, ReentrancyGuardTransient, Pausable, AutomationCompatib
         override
         returns (bool upkeepNeeded, bytes memory /* performData */ )
     {
-        uint256 balance = address(this).balance;
-        upkeepNeeded = balance > threshold;
+        bool isIntervalPassed = (block.timestamp - lastTimeStamp) > interval;
+        bool isBalanceEnough = address(this).balance > threshold;
+        upkeepNeeded = isIntervalPassed && isBalanceEnough;
         return (upkeepNeeded, "");
     }
 
     // chainlink Automation performUpkeep
     function performUpkeep(bytes calldata /* performData */ ) external override {
-        uint256 balance = address(this).balance;
-        if (balance <= threshold) {
-            revert WithdrawalFailed();
+        // re-check conditions
+        if ((block.timestamp - lastTimeStamp) <= interval) {
+            return;
         }
 
-        // withdraw half of the balance to owner
+        uint256 balance = address(this).balance;
+        if (balance <= threshold) {
+            return;
+        }
+
+        // update timestamp
+        lastTimeStamp = block.timestamp;
+
+        // execute transfer
         uint256 transferAmount = balance / 2;
-        Address.sendValue(payable(owner()), transferAmount);
+        Address.sendValue(payable(admin), transferAmount);
     }
 }

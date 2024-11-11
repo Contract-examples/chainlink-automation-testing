@@ -9,7 +9,7 @@ contract BankTest is Test {
     Bank public bank;
 
     function setUp() public {
-        bank = new Bank();
+        bank = new Bank(address(this), 10);
 
         // get code size
         uint256 codeSize;
@@ -66,5 +66,19 @@ contract BankTest is Test {
         // verify:
         // 1. recipient should receive all ETH
         assertEq(recipient.balance, initialBalance + bankBalance);
+    }
+
+    function testUpkeep() public {
+        vm.warp(block.timestamp + 11);
+        vm.deal(address(bank), 1 ether);
+        (bool upkeepNeeded,) = bank.checkUpkeep(abi.encode(0));
+        assertTrue(upkeepNeeded);
+    }
+
+    function testPerformUpkeep() public {
+        vm.warp(block.timestamp + 11);
+        vm.deal(address(bank), 1 ether);
+        vm.prank(bank.admin());
+        bank.performUpkeep(abi.encode(0));
     }
 }

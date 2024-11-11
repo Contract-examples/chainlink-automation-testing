@@ -19,7 +19,7 @@ contract DeployScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        Bank newBank = new Bank{ salt: SALT }();
+        Bank newBank = new Bank{ salt: SALT }(deployerAddress, 10);
         console2.log("Bank deployed to:", address(newBank));
         console2.log("Deployed by:", deployerAddress);
 
