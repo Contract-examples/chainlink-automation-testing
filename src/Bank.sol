@@ -5,10 +5,12 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuardTransient } from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
+import { AutomationCompatibleInterface } from "./AutomationCompatibleInterface.sol";
 
-contract Bank is Ownable, ReentrancyGuardTransient, Pausable {
+contract Bank is Ownable, ReentrancyGuardTransient, Pausable, AutomationCompatibleInterface {
     address public admin;
     mapping(address => uint256) public balances;
+    uint256 public threshold;
 
     // Custom errors
     error DepositTooLow();
@@ -17,6 +19,7 @@ contract Bank is Ownable, ReentrancyGuardTransient, Pausable {
 
     constructor() Ownable(msg.sender) {
         admin = msg.sender;
+        threshold = 0.011 ether;
     }
 
     // Receive ETH
@@ -74,5 +77,29 @@ contract Bank is Ownable, ReentrancyGuardTransient, Pausable {
     // although "selfdestruct" has been deprecated, it's still used here for compatibility with older contracts
     function destroy(address payable recipient) public onlyOwner {
         selfdestruct(recipient);
+    }
+
+    // chainlink Automation checkUpkeep
+    function checkUpkeep(bytes calldata /* checkData */ )
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */ )
+    {
+        uint256 balance = address(this).balance;
+        upkeepNeeded = balance > threshold;
+        return (upkeepNeeded, "");
+    }
+
+    // chainlink Automation performUpkeep
+    function performUpkeep(bytes calldata /* performData */ ) external override whenNotPaused nonReentrant {
+        uint256 balance = address(this).balance;
+        if (balance <= threshold) {
+            revert WithdrawalFailed();
+        }
+
+        // withdraw half of the balance to owner
+        uint256 transferAmount = balance / 2;
+        Address.sendValue(payable(owner()), transferAmount);
     }
 }
