@@ -91,7 +91,9 @@ contract Bank is Ownable, ReentrancyGuardTransient, Pausable, AutomationCompatib
         override
         returns (bool upkeepNeeded, bytes memory /* performData */ )
     {
-        upkeepNeeded = (block.timestamp - lastTimeStamp) > interval;
+        bool isIntervalPassed = (block.timestamp - lastTimeStamp) > interval;
+        bool isBalanceEnough = address(this).balance > threshold;
+        upkeepNeeded = isIntervalPassed && isBalanceEnough;
     }
 
     // chainlink Automation performUpkeep
