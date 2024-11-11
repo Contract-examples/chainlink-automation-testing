@@ -92,7 +92,7 @@ contract Bank is Ownable, ReentrancyGuardTransient, Pausable, AutomationCompatib
     }
 
     // chainlink Automation performUpkeep
-    function performUpkeep(bytes calldata /* performData */ ) external override whenNotPaused nonReentrant {
+    function performUpkeep(bytes calldata /* performData */ ) external override {
         uint256 balance = address(this).balance;
         if (balance <= threshold) {
             revert WithdrawalFailed();
