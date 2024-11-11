@@ -6,7 +6,7 @@ import "forge-std/console2.sol";
 import "../src/Bank.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 
-contract BankSepoliaScript is Script {
+contract DeployScript is Script {
     bytes32 constant SALT = bytes32(uint256(0x0000000000000000000000000000000000000000d3bf2663da51c10215000003));
 
     // contract bytecode
@@ -39,14 +39,14 @@ contract BankSepoliaScript is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Bank newBank = new Bank();
-        // console2.log("Bank deployed to:", address(newBank));
+        Bank newBank = new Bank();
+        console2.log("Bank deployed to:", address(newBank));
 
         // send 0.00001 ETH (10000000000000 wei)
-        address addr = Create2.deploy(0, SALT, BYTECODE);
+        // address addr = Create2.deploy(0, SALT, BYTECODE);
         // address addr = deploy(BYTECODE, SALT);
         // https://sepolia.arbiscan.io/address/0x5db8225dea62dd50fa197b5847287fe792272e87#code
-        console2.log("Bank deployed to:", addr);
+        // console2.log("Bank deployed to:", addr);
         console2.log("Deployed by:", deployerAddress);
 
         vm.stopBroadcast();
